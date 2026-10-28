@@ -5,6 +5,7 @@ Usage (depuis la racine du projet) :
     python telecharger_donnees.py
 """
 from pathlib import Path
+from urllib.parse import quote
 
 import pandas as pd
 import requests
@@ -42,6 +43,24 @@ telecharger("https://archive-api.open-meteo.com/v1/archive?latitude=48.86&longit
 telecharger("https://calendrier.api.gouv.fr/jours-feries/metropole.json",
             RAW / "jours_feries.json")
 
-# 4. Calendrier scolaire (toutes zones ; le filtre zone C se fait ensuite)
-telecharger("https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/",
-            RAW / "calendrier_scolaire.csv")
+# 4. Calendrier scolaire : vacances de la zone C (académie de Paris) qui touchent 2025
+filtre = quote(f"zones='Zone C' AND location='Paris' "
+               f"AND end_date >= '{DEBUT}' AND start_date <= '{FIN}'")
+telecharger("https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/"
+            f"fr-en-calendrier-scolaire/exports/csv?where={filtre}&delimiter=%3B",
+            RAW / "calendrier_scolaire_brut.csv")
+
+# Version lisible : une ligne par période, premier et dernier jour de vacances
+cal = pd.read_csv(RAW / "calendrier_scolaire_brut.csv", sep=";")
+cal = cal[cal["population"] != "Enseignants"]          # garde le calendrier élèves
+for col in ("start_date", "end_date"):
+    cal[col] = (pd.to_datetime(cal[col], utc=True)
+                .dt.tz_convert("Europe/Paris").dt.tz_localize(None).dt.normalize())
+cal["fin"] = cal["end_date"] - pd.Timedelta(days=1)     # end_date = jour de la rentrée
+cal = (cal.rename(columns={"description": "vacances", "start_date": "debut"})
+          [["vacances", "annee_scolaire", "debut", "fin"]]
+          .sort_values("debut"))
+cal["debut"] = cal["debut"].dt.date
+cal["fin"] = cal["fin"].dt.date
+cal.to_csv(RAW / "calendrier_scolaire.csv", sep=";", index=False)
+print(f"calendrier_scolaire.csv : {len(cal)} périodes de vacances")
