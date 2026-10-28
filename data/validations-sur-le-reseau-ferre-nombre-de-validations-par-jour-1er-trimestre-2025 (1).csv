@@ -1,4 +1,4 @@
-﻿JOUR;CODE_STIF_TRNS;CODE_STIF_RES;CODE_STIF_ARRET;ID_ZDC;LIBELLE_ARRET;CATEGORIE_TITRE;NB_VALD
+﻿jour;code_stif_trns;code_stif_res;code_stif_arret;ida;libelle_arret;categorie_titre;nb_vald
 2026-01-12;800;854;517;64405.0;MARLY LE ROI;Autres titres;10
 2026-01-12;800;854;527;65827.0;MAURECOURT;Contrat Solidarité Transport;55
 2026-01-12;800;854;527;65827.0;MAURECOURT;Forfait Navigo;469
